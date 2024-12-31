@@ -12,7 +12,6 @@ interface Frontmatter {
   thumbnail?: string;
 }
 
-// 静的パスを生成する
 export async function generateStaticParams() {
   const postsDirectory = path.join(process.cwd(), 'content');
   const fileNames = fs.readdirSync(postsDirectory);
@@ -22,7 +21,6 @@ export async function generateStaticParams() {
   }));
 }
 
-// 動的ルート用のコンポーネント
 export default async function BlogPost(
   props: {
     params: Promise<{ slug: string }>;
@@ -31,22 +29,18 @@ export default async function BlogPost(
   const params = await props.params;
   const { slug } = params;
 
-  // Markdownファイルのパスを取得
   const filePath = path.join(process.cwd(), 'content', `${slug}.md`);
   const fileContents = fs.readFileSync(filePath, 'utf8');
 
-  // ファイル内容を解析
   const { data, content } = matter(fileContents);
   const frontmatter = data as Frontmatter;
 
-  // MarkdownをHTMLに変換
   const processedContent = await unified()
     .use(remarkParse)
     .use(remarkHtml)
     .process(content);
   const contentHtml = processedContent.toString();
 
-  // レンダリング
   return (
     <Layout>
       <div className="bg-white px-6 py-32 lg:px-8">

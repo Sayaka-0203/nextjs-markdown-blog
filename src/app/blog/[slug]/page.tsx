@@ -5,24 +5,56 @@ import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkHtml from 'remark-html';
 import Layout from '../../../../components/Layout.js';
-import { NextPage } from 'next';
 
-interface Params {
-  slug: string;
+interface Frontmatter {
+  title: string;
+  date: string;
+  thumbnail?: string;
 }
 
-const BlogPost: NextPage<{ params: Params }> = async ({ params }) => {
+interface BlogPostProps {
+  frontmatter: Frontmatter;
+  contentHtml: string;
+}
+
+// 動的ルートを生成するためのパスを定義
+export async function getStaticPaths() {
+  const postsDirectory = path.join(process.cwd(), 'content');
+  const fileNames = fs.readdirSync(postsDirectory);
+
+  const paths = fileNames.map((fileName) => ({
+    params: { slug: fileName.replace('.md', '') },
+  }));
+
+  return {
+    paths,
+    fallback: false, // 存在しないパスは 404 を返す
+  };
+}
+
+// 各動的ルートに対応するデータを取得
+export async function getStaticProps({ params }: { params: { slug: string } }) {
   const { slug } = params;
   const filePath = path.join(process.cwd(), 'content', `${slug}.md`);
 
   const fileContents = fs.readFileSync(filePath, 'utf8');
   const { data, content } = matter(fileContents);
+  const frontmatter = data as Frontmatter;
 
-  const title = data.title;
-  const date = data.date;
-  const thumbnail = data.thumbnail || '/default-thumbnail.jpg';
   const processedContent = await unified().use(remarkParse).use(remarkHtml).process(content);
   const contentHtml = processedContent.toString();
+
+  return {
+    props: {
+      frontmatter,
+      contentHtml,
+    },
+  };
+}
+
+// 動的ルートに対応するコンポーネント
+export default function BlogPost({ frontmatter, contentHtml }: BlogPostProps) {
+  const { title, date, thumbnail = '/default-thumbnail.jpg' } = frontmatter;
 
   return (
     <Layout>
@@ -56,6 +88,4 @@ const BlogPost: NextPage<{ params: Params }> = async ({ params }) => {
       </div>
     </Layout>
   );
-};
-
-export default BlogPost;
+}

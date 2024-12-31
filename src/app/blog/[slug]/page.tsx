@@ -22,17 +22,21 @@ export async function generateStaticParams() {
   }));
 }
 
+// Dynamic Routeページのコンポーネント
 export default async function BlogPost({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+  const { slug } = params; // スラッグを取得
   const filePath = path.join(process.cwd(), 'content', `${slug}.md`);
 
+  // 記事のデータを取得
   const fileContents = fs.readFileSync(filePath, 'utf8');
   const { data, content } = matter(fileContents);
   const frontmatter = data as Frontmatter;
 
+  // MarkdownをHTMLに変換
   const processedContent = await unified().use(remarkParse).use(remarkHtml).process(content);
   const contentHtml = processedContent.toString();
 
+  // レンダリング
   return (
     <Layout>
       <div className="bg-white px-6 py-32 lg:px-8">

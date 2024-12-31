@@ -23,11 +23,12 @@ export async function generateStaticParams() {
 }
 
 // 動的ルート用のコンポーネント
-export default async function BlogPost({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function BlogPost(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
   const { slug } = params;
 
   // Markdownファイルのパスを取得

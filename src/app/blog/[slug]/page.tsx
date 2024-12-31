@@ -12,7 +12,7 @@ interface Frontmatter {
   thumbnail?: string;
 }
 
-// 静的なパスを生成
+// 静的パスを生成
 export async function generateStaticParams() {
   const postsDirectory = path.join(process.cwd(), 'content');
   const fileNames = fs.readdirSync(postsDirectory);
@@ -22,18 +22,25 @@ export async function generateStaticParams() {
   }));
 }
 
-// Dynamic Routeページのコンポーネント
-export default async function BlogPost({ params }: { params: { slug: string } }) {
-  const { slug } = params; // スラッグを取得
+// 動的ルート用ページ
+export default async function BlogPost({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const { slug } = params;
   const filePath = path.join(process.cwd(), 'content', `${slug}.md`);
 
-  // 記事のデータを取得
+  // ファイルを読み込み
   const fileContents = fs.readFileSync(filePath, 'utf8');
   const { data, content } = matter(fileContents);
   const frontmatter = data as Frontmatter;
 
   // MarkdownをHTMLに変換
-  const processedContent = await unified().use(remarkParse).use(remarkHtml).process(content);
+  const processedContent = await unified()
+    .use(remarkParse)
+    .use(remarkHtml)
+    .process(content);
   const contentHtml = processedContent.toString();
 
   // レンダリング
@@ -41,7 +48,6 @@ export default async function BlogPost({ params }: { params: { slug: string } })
     <Layout>
       <div className="bg-white px-6 py-32 lg:px-8">
         <div className="mx-auto max-w-3xl text-base leading-7 text-gray-700">
-          {/* サムネイル画像 */}
           <div className="mb-6">
             <img
               src={frontmatter.thumbnail || '/default-thumbnail.jpg'}
@@ -49,20 +55,14 @@ export default async function BlogPost({ params }: { params: { slug: string } })
               className="mt-4 w-64 h-auto mx-auto"
             />
           </div>
-
-          {/* 記事のタイトル */}
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
             {frontmatter.title}
           </h1>
-
-          {/* 投稿日 */}
           <div className="mt-2 text-gray-500">
             <time dateTime={frontmatter.date}>
               {new Date(frontmatter.date).toLocaleDateString()}
             </time>
           </div>
-
-          {/* 記事の内容 */}
           <div
             className="mt-6"
             dangerouslySetInnerHTML={{ __html: contentHtml }}
